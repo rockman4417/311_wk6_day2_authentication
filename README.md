@@ -21,26 +21,110 @@ Finally, in MySQL Workbench, run the `initialize.sql` script (on the "admin" dat
 
 ## Overview
 
+Note: This is a tough project, but hang in there and try to understand as much as possible. Auth0 is a popular framework for authentication. A lot of the setup is done for us.
+
 The routes/controllers, SQL statements and basic setup has been done for us. Our job is now to complete the functions in the middleware folder and then use them in our routes. 
 
 Keep in mind that your port (4001) may be different.
 
-## Signup and Login
+## GET users
 
-Take a look at the auth routes and auth controller. There is code in these that helps users signup and login to their accounts. We've created a separate table for this in our database called `usersCredentials`. Try making requests to `/auth/signup` and `/auth/login` with a similar request body:
+In Postman or a web browser, navigate to http://localhost:4001/users/ (a GET request) and you should be able to see a list of all the users in your database. This is information that we will leave public.
+
+## POST / PUT / DELETE
+
+These routes are for manipulating the data and these are things that we ideally want someone to be logged in for before they are able to work with the data. To start, we will create a middleware function (that Auth0) provides us. We also want to create an empty `.env` file in the main folder. We will use this to hold all of the Auth0 environment variables for our application. We don't want to upload these to Github. 
+
+### Middleware
+
+In the `middleware/index.js` file, locate the function called `checkJwt`. We will need to make some modifications to this function before it will work properly.
+
+1.  Notice the `AUTH0_IDENTITY` variable. We need to find the actual identifier you created in your Auth0 account. If you followed the pre-homework it will be called `my-express-app`. Set an environment variable in the .env file. It should look like this:
+
+```
+AUTH0_IDENTITY=my-express-app
+```
+
+1. Notice the `AUTH0_DOMAIN` variable. This is the domain associated with your account. This one is a little harder to find. Essentially.. it's your your tenant id (from Auth0) followed by `.auth0.com`. You can find the tenant ID to the left of your profile in the upper right-hand corner of the Auth0 page (when signed in). So for example if your tenant id is "dev-t4vriwms" then your domain will be "dev-t4vriwms.auth0.com". Add this to the .env file as well. It will now look like this:
+
+```
+AUTH0_IDENTITY=my-express-app
+AUTH0_DOMAIN=dev-t4vriwms.auth0.com
+```
+
+Now we need to apply this middleware to the routes you want to protect. Before you do that though... go to Postman and send a POST request to http://localhost:4001/users/ with no body. This should add a pre-selected user to your DB. You should have gotten a response that looks like this: 
 
 ```
 {
-  "username": "testuser",
-  "password": "password"
+    "newId": 501
 }
 ```
 
-Can you signup and login? Notice the `token` that comes back on login.
+In order to prevent this, we need to go to that route, the third one down in the `routers/users.js` file, and add `checkJWt` in between the path and the request/response function. The final result should look like this:
 
-## Middleware functions
+```
+router.post('/', checkJwt, usersController.createUser)
+```
 
-### logger
+Now go ahead and attempt to make that POST request again in Postman. The one to http://localhost:4001/users/. Try it a couple of times. You should now get a response with a 401 status code and a body that has `UnauthorizedError: No authorization token was found` in it. That's good news, we are now blocking requests to this endpoint until people are authenticated. Add that same middleware to the rest of the routes (that are not GET requests) in the `routers/users.js` file.
+
+## Authenticating
+
+So how do users authenticate? We've seen how we can block them but now we actually need certain users to have access. So we need to send the bearer token (jwt). First we'll do a test run.
+
+### Testing the JWT
+
+From the Auth0 dashboard in your browser, navigate to APIs (on the left side) -> My Express App (the API you created in pre-homework) -> Test. Midway down the page in the codeblock labled "Response", click the overlapping squares (copy) button in the upper right so copy the token to your clipboard. It should start with `eyJ0eXAiOiJKV1QiLCJh...` or some close combination of characters. 
+
+Now in Postman, we're going to execute that same POST request but this time we are going to add a header. A header as we know is a piece of information that gets sent along with the request. In Postman go to the "headers" column and give it the name "Authorization" and the value of your token preceeded by the word "Bearer". So it will look something like:
+
+`Authorization: Bearer eyJ0eXAiOiJKV1QiLCJh...`
+
+Execute the request and notice that you are allowed to add users again and see a response that looks like this:
+
+```
+{
+    "newId": 502
+}
+```
+
+### Obtaining the JWT
+
+Ok so we now have protected routes and some users can access them if they have the appropriate token but where do they get that token from? We need to create a workflow that sends back a token when a user logs in. We need to do that by calling an Auth0 endpoint during the login endpoint.
+
+Find the "login" function in `controllers/auth.js`. You'll see that the call the the Auth0 endpoint is mostly complete but we still need to do a few things. 
+
+1. Set the default directory on your Auth0 account to "Username-Password-Authentication". You can do this by clicking on your profile icon in the top right corner of your dashboard and selecting "Settings". On the settings page scroll down to "API Authorization Settings" -> "Default Directory".
+
+1. There are two other envrionment variables we need to set in our `.env` file. They are "AUTH0_CLIENT_ID" and "AUTH0_CLIENT_SECRET". You can find this information in the same place we copied the test bearer token from. In the first box find the "client_id" and "client_secret" keys. Add them to your .env file. The complete file should now look like this:
+
+```
+AUTH0_IDENTITY=my-express-app
+AUTH0_DOMAIN=dev-t4vriwms.auth0.com
+AUTH0_CLIENT_ID=60nkmegUxOFGMn...
+AUTH0_CLIENT_SECRET=BkAX6wMgD5OhRGRnFYRNBgueTX...
+```
+
+1. Now we need to create a couple of users for our application to use. We will do this manually for now. Go to the main page of your Auth0 dashboard in your browser, select "Users & Roles" -> "User", then click "Create User". Leave the default connection type and enter an email and password for you user. For example:
+
+```
+email: test@example.com
+password: Password!
+```
+
+Remember this information because we are about to use it again. This time go to Postman and submit a request to the "/auth/login" route that's already been created for us in this appliction. The full request will be a POST to http://localhost:4001/auth/login with the body:
+
+```
+{
+	"username": "test@example.com",
+    "password": "Password!"
+}
+```
+
+If everything worked correctly you should have recieved an "access_token" in return. That's the token that we can use to send to your endpoints after a user logs in. Keep in mind that the "users" are now stored in Auth0 and are different from the users we have in our database. Those database users are just dummy data at this point. We won't need to actually store information about our users because Auth0 will do it for us. 
+
+
+## BONUS - logger
 
 Create a function called `logger` in the `middleware/index.js` file. It's purpose will be to log the route and date/time that each request happened. The outline of the function will look like this:
 
@@ -63,40 +147,6 @@ Import this logger function into the main `index.js` file: `const { logger } = r
 Between the bodyParser and the users router add the following: `app.use(logger)`
 
 This is an example of application specific middleware. Every route will now pass through our logger function and log the path and the date/time that the request was made. This would be useful for determining our most popular routes.
-
-
-### authenticate
-
-Create a function called `authenticate` in the `middleware/index.js` file. It's purpose will be to check for the existence of an _Authorization header_ and parse/decode/verify the header. This header contains a Bearer token and if that token is valid we will allow the user to access the given resource.
-
-Use the /signup route to signup with a username/password combination. Then call the /login function to retrieve a token. Save that token for later use. We will include it in our Authorization header. 
-
-The outline of the authenticate function should look like this:
-```
-const authenticate = (req, res, next) => {
-
-}
-```
-
-Inside of this function we will do three things:
-
-1. Retrieve the token from the Authorization header: req.headers['authorization']
-2. Split the result to get just the token. `header.split(' ')` should return `['Bearer', <TOKEN>]`
-3. [Verify the token](https://www.npmjs.com/package/jsonwebtoken#jwtverifytoken-secretorpublickey-options-callback)
-4. If successful, add the decoded token to the request object: `req.user = decoded`
-5. Call next()
-
-Think about what to do if the token is not verified or the Authorization header does not exist. We probably want to `res.sendStatus(401)` to let the user know that they are not authorized. 
-
-Import `{ authenticate }` into the users router and add it as middleware on all of the users routes. Ex:
-
-`router.get('/', authenticate, usersController.getAllUsers)`
-
-Attempt to call the /users endpoints to GET and POST user data. If you don't included an Authorization header in your request from Postman, you should see an error 401 status. If you did include a valid token you should see a 200 status code and the data should be returned to you.
-
-The Authorization header should look like this: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInBhc3N3b3JkIjoiUkVEQUNURUQiLCJpYXQiOjE1NjE1ODM3MDR9.oTiDpNWJ3-JZ1k47nG-xQyi1fk_zlNjRgAbxRrYTlJU`
-
-You are responsible for putting this in Postman manually. 
 
 ## Summary
 

@@ -1,13 +1,16 @@
 # Express Authentication
 
+PLEASE NOTE THAT PRIOR TO THIS ASSIGNMENT, YOU NEED TO HAVE FINISHED THE SECTION TITLED "Authentication with Auth0" IN THE PRE-HOMEWORK
+
 ## Setup
 
 Initialize and run the app: `npm install` && `npm start`.
 
 The app is using `nodemon`. Any changes made (and saved) will cause the server to restart.
 
-Navigate to the `sql/connections.js` file and alter the following fields to reflect your database setup:
+Navigate to the `sql/connections.js` file and alter the following fields to reflect your database setup. These will be the same credentials we used to set up a connection in MySQL Workbench.
 
+NOTE: The code-block below is just an example but yours may be the same
 ```
   host: 'localhost',
   user: 'root',
@@ -15,9 +18,7 @@ Navigate to the `sql/connections.js` file and alter the following fields to refl
   database: 'admin'
 ```
 
-These will be the same credentials we used to set up a connection in MySQL Workbench.
-
-Finally, in MySQL Workbench, run the `initialize.sql` script (on the "admin" database) that is included in this project.
+Finally, in MySQL Workbench, run the `initialize.sql` script that is included in this project. You will run this on the "admin" database. You can simply copy the sql from the file into your MySQL Workbench console. Follow the steps under the `imgs` folder if you are having trouble with this.
 
 ## Overview
 
@@ -39,13 +40,13 @@ These routes are for manipulating the data and these are things that we ideally 
 
 In the `middleware/index.js` file, locate the function called `checkJwt`. We will need to make some modifications to this function before it will work properly.
 
-1.  Notice the `AUTH0_IDENTITY` variable. We need to find the actual identifier you created in your Auth0 account. If you followed the pre-homework it will be called `my-express-app`. Set an environment variable in the .env file. It should look like this:
+1.  Notice the `AUTH0_IDENTITY` variable. We need to find the actual identifier you created in your Auth0 account. If you followed the pre-homework it will be called `my-express-app`. Set an environment variable in the .env file. The file should look like this:
 
 ```
 AUTH0_IDENTITY=my-express-app
 ```
 
-1. Notice the `AUTH0_DOMAIN` variable. This is the domain associated with your account. This one is a little harder to find. Essentially.. it's your your tenant id (from Auth0) followed by `.auth0.com`. You can find the tenant ID to the left of your profile in the upper right-hand corner of the Auth0 page (when signed in). So for example if your tenant id is "dev-t4vriwms" then your domain will be "dev-t4vriwms.auth0.com". Add this to the .env file as well. It will now look like this:
+2. Notice the `AUTH0_DOMAIN` variable. This is the domain associated with your account. This one is a little harder to find. Essentially.. it's your your tenant id (from Auth0) followed by `.auth0.com`. You can find the tenant ID to the left of your profile in the upper right-hand corner of the Auth0 page (when signed in). So for example if your tenant id is "dev-t4vriwms" then your domain will be "dev-t4vriwms.auth0.com". Add this to the .env file as well. It will now look like this:
 
 ```
 AUTH0_IDENTITY=my-express-app
@@ -74,7 +75,7 @@ So how do users authenticate? We've seen how we can block them but now we actual
 
 ### Testing the JWT
 
-From the Auth0 dashboard in your browser, navigate to APIs (on the left side) -> My Express App (the API you created in pre-homework) -> Test. Midway down the page in the codeblock labled "Response", click the overlapping squares (copy) button in the upper right so copy the token to your clipboard. It should start with `eyJ0eXAiOiJKV1QiLCJh...` or some close combination of characters. 
+From the Auth0 dashboard in your browser, navigate to APIs (on the left side) -> My Express App (the API you created in pre-homework) -> Test. Midway down the page in the codeblock labled "Response", copy the "access token" to your clipboard. It should start with `eyJ0eXAiOiJKV1QiLCJh...` or some close combination of characters. 
 
 Now in Postman, we're going to execute that same POST request but this time we are going to add a header. A header as we know is a piece of information that gets sent along with the request. In Postman go to the "headers" column and give it the name "Authorization" and the value of your token preceeded by the word "Bearer". So it will look something like:
 
@@ -96,7 +97,7 @@ Find the "login" function in `controllers/auth.js`. You'll see that the call the
 
 1. Set the default directory on your Auth0 account to "Username-Password-Authentication". You can do this by clicking on your profile icon in the top right corner of your dashboard and selecting "Settings". On the settings page scroll down to "API Authorization Settings" -> "Default Directory".
 
-1. There are two other envrionment variables we need to set in our `.env` file. They are "AUTH0_CLIENT_ID" and "AUTH0_CLIENT_SECRET". You can find this information in the same place we copied the test bearer token from. In the first box find the "client_id" and "client_secret" keys. Add them to your .env file. The complete file should now look like this:
+2. There are two other envrionment variables we need to set in our `.env` file. They are "AUTH0_CLIENT_ID" and "AUTH0_CLIENT_SECRET". You can find this information in the same place we copied the test bearer token from. In the first box find the "client_id" and "client_secret" keys. Add them to your .env file. The complete file should now look like this:
 
 ```
 AUTH0_IDENTITY=my-express-app
@@ -105,7 +106,9 @@ AUTH0_CLIENT_ID=60nkmegUxOFGMn...
 AUTH0_CLIENT_SECRET=BkAX6wMgD5OhRGRnFYRNBgueTX...
 ```
 
-1. Now we need to create a couple of users for our application to use. We will do this manually for now. Go to the main page of your Auth0 dashboard in your browser, select "Users & Roles" -> "User", then click "Create User". Leave the default connection type and enter an email and password for you user. For example:
+NOTE: You may need to change and un-change something in your code in order for nodemon to register these new environment variables. Saving the files does that for us.
+
+3. Now we need to create a couple of users for our application to use. We will do this manually for now. Go to the main page of your Auth0 dashboard in your browser, select "Users & Roles" -> "User", then click "Create User". Leave the default connection type and enter an email and password for you user. For example:
 
 ```
 email: test@example.com

@@ -26,16 +26,6 @@ const saltRounds = 10
 //   })
 // }
 
-const url = 'https://hipperger.us.auth0.com/oauth/token'
-const dataOBJ = {
-    grant_type: 'client_credentials',
-    audience: 'my-express-app',
-    connection: 'Username-Password-Authentication',
-    scope: 'openid',
-    client_id: 'QEk1Jzy2d3RBL2qhu38Kn83gTu4PKsv0',
-    client_secret: 'rbfu-vxIZyO6vjrZAFkJgNtWmzb8TrLgeLMAyzPvtHi9wRNqvsDJ-qS1UjpIWJMH' 
-}
-
 const login = (req, res) => {
   const { username, password } = req.body
 
@@ -50,7 +40,6 @@ const login = (req, res) => {
       password: password,
       audience: process.env.AUTH0_IDENTITY,
       connection: 'Username-Password-Authentication',
-      // scope: 'openid', <<<<<------- Delete!
       client_id: process.env.AUTH0_CLIENT_ID,
       client_secret: process.env.AUTH0_CLIENT_SECRET
     }

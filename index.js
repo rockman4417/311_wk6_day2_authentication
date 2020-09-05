@@ -8,7 +8,6 @@ const pool = require('./sql/connection')
 const app = express();
 const { logger } = require('./middleware/index')
 
-
 console.log('******** DB Connection Pool ******** \n ', pool)
 
 app.use(bodyParser.json())

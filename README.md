@@ -148,6 +148,8 @@ Remember this information because we are about to use it again. This time go to 
 
 If everything worked correctly you should have received an "access_token" in return. That's the token that we can use to send to your endpoints after a user logs in. Keep in mind that the "users" are now stored in Auth0 and are different from the users we have in our database. Those database users are just dummy data at this point. We won't need to actually store information about our users because Auth0 will do it for us.
 
+If you are having issues you may try going to Auth0 >> Settings/Dashboard >> Applications >> my-express-app >> Show Advanced Settings >> Grant Types >> And selecting "Password"
+
 ## BONUS - logger
 
 Create a function called `logger` in the `middleware/index.js` file. It's purpose will be to log the route and date/time that each request happened. The outline of the function will look like this:

@@ -1,18 +1,22 @@
+require('dotenv').config()
 const jwksRsa = require('jwks-rsa');
 const jwt = require('express-jwt');
 
-const logger = () => {}
+const logger = (req, res, next) => {
+  console.log('!*****! REQUEST: !*****!', req.path, new Date().toISOString())
+  next()
+}
 
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
     rateLimit: true,
     jwksRequestsPerMinute: 5,
-    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
+    jwksUri: 'https://hipperger.us.auth0.com/.well-known/jwks.json'
   }),
   // Validate the audience and the issuer.
-  audience: process.env.AUTH0_IDENTITY,
-  issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+  audience: 'my-express-app',
+  issuer: 'https://hipperger.us.auth0.com/',
   algorithms: ['RS256']
 });
 

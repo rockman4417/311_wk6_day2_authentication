@@ -4,22 +4,39 @@ PLEASE NOTE THAT PRIOR TO THIS ASSIGNMENT, YOU NEED TO HAVE FINISHED THE SECTION
 
 ## Setup
 
-Initialize and run the app: `npm install` && `npm start`.
+1. Initialize and run the app: `npm install` to watch the dependencies be downloaded
 
-The app is using `nodemon`. Any changes made (and saved) will cause the server to restart.
+2. Create a `.env` file with the following structure. Alter the fields wrapped in `<  >` to reflect your Google Cloud SQL database setup. These will be the same credentials we used to set up a connection in MySQL Workbench.
 
-Navigate to the `sql/connections.js` file and alter the following fields to reflect your database setup. These will be the same credentials we used to set up a connection in MySQL Workbench.
+The other values can be found on your Auth0 profile after completing the pre-homework.
 
-NOTE: The code-block below is just an example but yours may be the same
-
-```js
-  host: 'localhost',
-  user: 'root',
-  password: 'password',
-  database: 'admin'
+```yaml
+    DB_HOST=<mySQLWorkbench_Connect_Hostname>
+    DB_USER=root
+    DB_PASSWORD=<mySQLWorkbench_Connect_Password>
+    DB_DEFAULT_SCHEMA=<mySQLWorkbench_Connect_DefaultSchema> || admin
+    AUTH0_IDENTITY=my-express-app
+    AUTH0_DOMAIN=<findOnAuth0-APIs>>my-express-app>>test>>Node.js>>https://EVERYTHINGbtwHEREandHERE/oauth/token>
+    AUTH0_CLIENT_ID=<sameAsAbove_butFind"client_id"inTheBody>
+    AUTH0_CLIENT_SECRET=<sameAsAbove_butFind"client_secret"inTheBody>
 ```
 
-Finally, in MySQL Workbench, run the `initialize.sql` script that is included in this project. You will run this on the "admin" database. You can simply copy the sql from the file into your MySQL Workbench console. Follow the steps under the `imgs` folder if you are having trouble with this.
+> *NOTE: Don't include quotes in the `.env` file. If you're having trouble creating a connection with your DB in Google Cloud, try inputting the values directly into the `connection.js` file.*
+
+4. Navigate to the `sql/connections.js` file and confirm you under stand why the fields are using `process.env.SOMETHING`. Where are they coming from?
+
+```js
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DEFAULT_SCHEMA
+```
+
+> *NOTE: Line 1 in `sql/connections.js` is invoking a method on the `dotenv` package. What do you think that is doing?
+
+5. The app is using `nodemon` so you can use `npm start` and any changes made (and saved) will cause the server to restart automatically.
+
+6. Finally, in MySQL Workbench, run the `initialize.sql` script that is included in this project. You will run this on the "admin" database. You can simply copy the sql from the file into your MySQL Workbench console. Follow the steps under the `imgs` folder if you are having trouble with this.
 
 ## Overview
 
@@ -41,17 +58,17 @@ These routes are for manipulating the data and these are things that we ideally 
 
 In the `middleware/index.js` file, locate the function called `checkJwt`. We will need to make some modifications to this function before it will work properly.
 
-1.  Notice the `AUTH0_IDENTITY` variable. We need to find the actual identifier you created in your Auth0 account. If you followed the pre-homework it will be called `my-express-app`. Set an environment variable in the `.env` file. The file should look like this:
+1. Notice the `AUTH0_IDENTITY` variable. We need to find the actual identifier you created in your Auth0 account. If you followed the pre-homework it will be called `my-express-app`. If you didn't do this during the Setup section then create an environment variable in the `.env` file. The file should look like this:
 
 ```yaml
 AUTH0_IDENTITY=my-express-app
 ```
 
-2. Notice the `AUTH0_DOMAIN` variable. This is the domain associated with your account. This one is a little harder to find. Essentially.. it's your your tenant id (from Auth0) followed by `.auth0.com`. You can find the tenant ID to the left of your profile in the upper right-hand corner of the Auth0 page (when signed in). So for example if your tenant id is "dev-t4vriwms" then your domain will be "dev-t4vriwms.auth0.com". Add this to the `.env` file as well. It will now look like this:
+2. Notice the `AUTH0_DOMAIN` variable. This is the domain associated with your account. This one is a little harder to find. Essentially... it's your your tenant id (from Auth0) followed by `.us.auth0.com`. You can find the tenant ID to the left of your profile in the upper right-hand corner of the Auth0 page (when signed in). So for example if your tenant id is "dev-t4vriwms" then your domain will be "dev-t4vriwms.us.auth0.com". You likely did this in the setup steps but if now, make sure to add this to the `.env` file as well. It will now look like this:
 
 ```yaml
 AUTH0_IDENTITY=my-express-app
-AUTH0_DOMAIN=dev-t4vriwms.auth0.com
+AUTH0_DOMAIN=dev-t4vriwms.us.auth0.com
 ```
 
 Now we need to apply this middleware to the routes you want to protect. Before you do that though... go to Postman and send a POST request to `http://localhost:4001/users/` with no body. This should add a pre-selected user to your DB. You should have gotten a response that looks like this:
@@ -65,6 +82,7 @@ Now we need to apply this middleware to the routes you want to protect. Before y
 In order to prevent this, we need to go to that route, the third one down in the `routers/users.js` file, and add `checkJWt` in between the path and the request/response function. The final result should look like this:
 
 ```js
+// routes/users line 10
 router.post('/', checkJwt, usersController.createUser)
 ```
 
@@ -94,11 +112,11 @@ Execute the request and notice that you are allowed to add users again and see a
 
 Ok so we now have protected routes and some users can access them if they have the appropriate token but where do they get that token from? We need to create a workflow that sends back a token when a user logs in. We need to do that by calling an Auth0 endpoint during the login endpoint.
 
-Find the "login" function in `controllers/auth.js`. You'll see that the call the the Auth0 endpoint is mostly complete but we still need to do a few things.
+Find the "login" function in [controllers/auth.js](./controllers/auth.js). You'll see that the call the the Auth0 endpoint is mostly complete but we still need to do a few things.
 
 1. Set the default directory on your Auth0 account to "Username-Password-Authentication". You can do this by clicking on your profile icon in the top right corner of your dashboard and selecting "Settings". On the settings page scroll down to "API Authorization Settings" -> "Default Directory".
 
-2. There are two other environment variables we need to set in our `.env` file. They are "AUTH0_CLIENT_ID" and "AUTH0_CLIENT_SECRET". You can find this information in the same place we copied the test bearer token from. In the first box find the "client_id" and "client_secret" keys. Add them to your `.env` file. The complete file should now look like this:
+2. There are two other environment variables we need to set in our `.env` file. They are "AUTH0_CLIENT_ID" and "AUTH0_CLIENT_SECRET". You can find this information in the same place we copied the test bearer token from. In the first box find the "client_id" and "client_secret" keys. Again, if you haven't already, ddd them to your `.env` file. The complete file should now look like this:
 
 ```yaml
 AUTH0_IDENTITY=my-express-app

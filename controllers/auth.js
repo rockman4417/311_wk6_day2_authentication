@@ -1,3 +1,4 @@
+require('dotenv').config()
 const axios = require('axios')
 const mysql = require('mysql')
 const bcrypt = require('bcrypt')
@@ -25,6 +26,16 @@ const saltRounds = 10
 //   })
 // }
 
+const url = 'https://hipperger.us.auth0.com/oauth/token'
+const dataOBJ = {
+    grant_type: 'client_credentials',
+    audience: 'my-express-app',
+    connection: 'Username-Password-Authentication',
+    scope: 'openid',
+    client_id: 'QEk1Jzy2d3RBL2qhu38Kn83gTu4PKsv0',
+    client_secret: 'rbfu-vxIZyO6vjrZAFkJgNtWmzb8TrLgeLMAyzPvtHi9wRNqvsDJ-qS1UjpIWJMH' 
+}
+
 const login = (req, res) => {
   const { username, password } = req.body
 
@@ -34,12 +45,12 @@ const login = (req, res) => {
       'content-type': 'application/json'
     },
     data: {
-      grant_type: 'password',
+      grant_type: "client_credentials",
       username: username,
       password: password,
       audience: process.env.AUTH0_IDENTITY,
       connection: 'Username-Password-Authentication',
-      scope: 'openid',
+      // scope: 'openid', <<<<<------- Delete!
       client_id: process.env.AUTH0_CLIENT_ID,
       client_secret: process.env.AUTH0_CLIENT_SECRET
     }
@@ -51,34 +62,11 @@ const login = (req, res) => {
     })
   })
   .catch(e => {
+    console.log(e)
     res.send(e)
   })
-
-  // let sql = "SELECT * FROM usersCredentials WHERE username = ?"
-  // sql = mysql.format(sql, [ username ])
-
-  // pool.query(sql, (err, rows) => {
-  //   if (err) return handleSQLError(res, err)
-  //   if (!rows.length) return res.status(404).send('No matching users')
-
-  //   const hash = rows[0].password
-  //   bcrypt.compare(password, hash)
-  //     .then(result => {
-  //       if (!result) return res.status(400).send('Invalid password')
-
-  //       const data = { ...rows[0] }
-  //       data.password = 'REDACTED'
-
-  //       const token = jwt.sign(data, 'secret')
-  //       res.json({
-  //         msg: 'Login successful',
-  //         token
-  //       })
-  //     })
-  // })
 }
 
 module.exports = {
-  // signup,
   login
 }

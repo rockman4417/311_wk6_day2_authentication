@@ -1,13 +1,18 @@
 require('dotenv').config()
+const port = process.env.PORT || 4001;
 const express = require("express");
 const bodyParser = require("body-parser");
 const usersRouter = require('./routers/users');
 const authRouter = require('./routers/auth');
-
+const pool = require('./sql/connection')
 const app = express();
-const port = process.env.PORT || 4001;
+const { logger } = require('./middleware/index')
+
+
+console.log('******** DB Connection Pool ******** \n ', pool)
 
 app.use(bodyParser.json())
+app.use(logger)
 app.use('/users', usersRouter)
 app.use('/auth', authRouter)
 

@@ -1,4 +1,4 @@
-const axios = require('axios')
+1const axios = require('axios')
 const mysql = require('mysql')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
@@ -39,7 +39,6 @@ const login = (req, res) => {
       password: password,
       audience: process.env.AUTH0_IDENTITY,
       connection: 'Username-Password-Authentication',
-      scope: 'openid',
       client_id: process.env.AUTH0_CLIENT_ID,
       client_secret: process.env.AUTH0_CLIENT_SECRET
     }

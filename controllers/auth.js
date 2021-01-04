@@ -1,4 +1,4 @@
-1const axios = require('axios')
+const axios = require('axios')
 const mysql = require('mysql')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
